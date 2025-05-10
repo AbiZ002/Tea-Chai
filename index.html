@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tea Protocol Daily Check-In</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: url('https://cryptologos.cc/logos/tea-token-tea-logo.png') no-repeat center top;
+      background-size: 100px;
+      background-color: #1a2e1f;
+      color: #f2f2f2;
+      text-align: center;
+      padding: 120px 20px 40px;
+      animation: fadeIn 1.2s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: #ace3b8;
+    }
+
+    #status {
+      margin: 1rem 0;
+      font-size: 1rem;
+      transition: opacity 0.5s ease-in;
+    }
+
+    button {
+      padding: 12px 24px;
+      margin: 10px;
+      font-size: 1rem;
+      background-color: #2b5d3d;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #3aa268;
+      transform: scale(1.05);
+      box-shadow: 0 0 8px #ace3b8;
+    }
+
+    .poster {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 10px #3aa268;
+      max-width: 500px;
+      margin: auto;
+      animation: slideUp 1.2s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <img src="https://cryptologos.cc/logos/tea-token-tea-logo.png" class="logo" alt="Tea Logo" />
+    <h1>Tea Protocol Check-In</h1>
+    <p id="status">Connect your wallet to check in</p>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <button onclick="checkIn()">Daily Check-In</button>
+  </div>
+
+  <script>
+    const contractAddress = "YOUR_CONTRACT_ADDRESS"; // Replace after deploying
+    const abi = [
+      "function checkIn() public",
+      "function getLastCheckIn(address user) public view returns (uint256)"
+    ];
+
+    let provider, signer, contract, userAddress;
+
+    async function connectWallet() {
+      if (!window.ethereum) return alert("MetaMask required");
+
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      contract = new ethers.Contract(contractAddress, abi, signer);
+
+      const last = await contract.getLastCheckIn(userAddress);
+      const lastDate = new Date(last.toNumber() * 1000);
+      document.getElementById("status").innerText = `Connected: ${userAddress}\nLast Check-In: ${lastDate.toDateString()}`;
+    }
+
+    async function checkIn() {
+      if (!contract) return alert("Connect wallet first");
+
+      try {
+        const tx = await contract.checkIn();
+        await tx.wait();
+        alert("Check-in successful!");
+        connectWallet();
+      } catch (err) {
+        alert(err.message || "Check-in failed.");
+      }
+    }
+  </script>
+</body>
+</html>
